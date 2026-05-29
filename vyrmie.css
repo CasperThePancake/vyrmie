@@ -1,0 +1,157 @@
+    #vertButtons {
+        width: 34%;
+    }
+
+    #vertTasks {
+        width: 33%;
+    }
+
+    #vertActivities {
+        width: 33%;
+    }
+
+    #mainFrame {
+        width:100%;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    #appList Button {
+        margin-bottom: 1;
+        width: 50%;
+    }
+
+    Button.defaultButton:hover {
+        outline: heavy $secondary;
+    }
+
+    Button.defaultButton {
+        background: #2e3440;
+        outline: double $secondary;
+    }
+
+    Button.defaultButton:focus {
+        outline: double $secondary;
+    }
+
+    #header {
+        border: round $primary;
+        padding: 0 2;
+        width: auto;
+        height: 3;
+        content-align: center middle;
+        margin: 1 2;
+    }
+
+    Collapsible {
+        background: $background;
+    }
+
+    Tabs #tabs-list {
+        align-horizontal: center;
+    }
+
+    .taskPane Vertical Horizontal {
+        height: auto;
+    }
+
+    .taskPane Vertical {
+        height: auto;
+    }
+
+    #dateInput .dateChooser {
+        width:15%;
+    }
+
+    .dateInputCustom .dateChooser {
+        width: 30%;
+    }
+
+    #dateInput, .dateInputCustom, .dateInputEvent, .timeInputEvent {
+        align: center top;
+    }
+
+    #createTask {
+        margin-top: 1;
+        width: auto;
+        text-align: center;
+    }
+
+    .dateInputEvent .dateChooser {
+        width: 30%;
+    }
+
+    .timeInputEvent .timeChooser {
+        width: 10%;
+    }
+
+    #dateSwitcher, #timeSwitcher, #fromFullDay, #toFullDay {
+        align: center top;
+    }
+
+    #timeSwitcher {
+        height: auto;
+    }
+
+    #eventRepeatsTitle {
+        width: auto;
+        height: 3;
+        content-align: left middle;
+    }
+
+    #eventRepeatsMain {
+        align: center middle;
+    }
+
+    #eventRepeatsSelect {
+        width: 15%;
+    }
+
+#dateSwitcher > Switch, #fromFullDay > Switch, #toFullDay > Switch {
+    width: auto;
+    background: $background;
+    outline: blank;
+    align: center middle;
+}
+
+#dateSwitcher > Static, #fromFullDay > Static, #toFullDay > Static {
+    width: auto;
+}
+
+.taskList {
+    height: auto;
+}
+
+.taskListDailyDate {
+    margin-top:4;
+    border: hkey $accent;
+}
+
+.taskListDailyDate.today {
+    border: hkey $success;
+}
+
+#deadlinesCanList, #deadlinesCannotList, #generalTasksCanList, #generalTasksCannotList {
+    height: auto;
+}
+
+.top-header {
+    margin-top: 1;
+}
+
+#eventOptions {
+    align: center middle;
+    height: auto;
+}
+
+.eventDetailsBtn {
+    width: auto;
+    margin-right: 2;
+    margin-left: 2;
+}
+
+#dailyList, #deadlineList, #generalList {
+    height: auto;
+}
