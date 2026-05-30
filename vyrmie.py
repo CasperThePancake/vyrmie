@@ -12,7 +12,7 @@ def beep(freq=1000):
 # Textual imports
 from textual.app import App, ComposeResult
 from textual.widgets import Footer, Header, Static, Button, Rule, Input, Collapsible, TabbedContent, TabPane, Select, \
-    Switch, ListView, ListItem, Label, TextArea
+    Switch, ListView, ListItem, Label, TextArea, Tab, Tabs
 from textual.containers import Vertical, Horizontal, Center, CenterMiddle, VerticalScroll
 from textual import log, events
 from textual.reactive import reactive
@@ -38,6 +38,21 @@ WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 # CUSTOM WIDGETS
 # ================================================
 
+# Logbook edit button
+class LogbookEditBtn(Static):
+    def __init__(self, topic: str, entry: str, **kwargs):
+        super().__init__("Edit", **kwargs)
+        self.topic = topic
+        self.entry = entry
+
+    def on_click(self, event):
+        event.stop()
+        def after_confirm(confirm: tuple):
+            if confirm:
+                nt.edit_entry(self.topic,self.entry,confirm[0],confirm[1])
+                self.app.screen.load_logbook()
+        self.app.push_screen(LogbookEntryEdit(self.topic,self.entry),after_confirm)
+
 # Logbook delete button
 class LogbookDeleteBtn(Static):
     def __init__(self, topic: str, entry: str, **kwargs):
@@ -48,6 +63,35 @@ class LogbookDeleteBtn(Static):
     def on_click(self, event):
         event.stop()
         self.post_message(LogbookMenu.DeleteEntry(self.topic, self.entry))
+
+# Logbook buttons
+class EntryButtons(Widget):
+    DEFAULT_CSS = """
+    .buttonHorizontal {
+        height: auto;
+    }
+    
+    EntryButtons .editBtn {
+        width: auto;
+        margin-right: 3;
+    }
+    
+    EntryButtons .deleteBtn {
+        width: auto;
+    }
+    
+    """
+
+
+    def __init__(self, topic: str, entry: str, **kwargs):
+        super().__init__(**kwargs)
+        self.topic = topic
+        self.entry = entry
+
+    def compose(self):
+        with Horizontal(classes="buttonHorizontal"):
+            yield LogbookEditBtn(self.topic, self.entry, classes="editBtn")
+            yield LogbookDeleteBtn(self.topic, self.entry, classes="deleteBtn")
 
 # Calendar week
 class WeekView(Widget):
@@ -1732,32 +1776,69 @@ class LogbookMenu(Screen):
         color: $error;
     }
     
+    .editBtn {
+        color: sandybrown;
+    }
+    
+    .buttonsHorizontal {
+        height: auto;
+    }
+    
     """
 
     BINDINGS = [  # key, action, description
         ("escape", "app.pop_screen", "Go back"),
         ("n", "new_topic", "New topic"),
+        ("r", "edit_topic", "Edit selected topic"),
         ("del", "del_topic", "Delete selected topic"),
         ("enter", "new_entry", "New entry"),
     ]
 
+    def action_edit_topic(self):
+        tabs = self.query_one("#tabs", TabbedContent)
+        active_id = tabs.active  # "tab-1"
+        for tab in tabs.query(Tab):
+            if tab.id == f"--content-tab-{active_id}":
+                topic = str(tab.label)
+                break
+        def after_confirm(result):
+            if result:
+                nt.edit_topic(topic,result)
+                self.load_logbook()
+        self.app.push_screen(LogbookTopicEdit(topic),after_confirm)
+
     def action_del_topic(self):
+        tabs = self.query_one("#tabs", TabbedContent)
+        active_id = tabs.active  # "tab-1"
+        for tab in tabs.query(Tab):
+            if tab.id == f"--content-tab-{active_id}":
+                topic = str(tab.label)
+                break
         def after_confirm(confirm):
             if confirm:
-                nt.delete_topic(self.query_one("#tabs").active_pane.title)
+                nt.delete_topic(topic)
+                self.load_logbook()
         self.app.push_screen(ConfirmPopup("delete the selected topic"),after_confirm)
 
     def action_new_topic(self):
         def after_confirm(result):
             if result:
                 nt.add_topic(result)
+                self.load_logbook()
         self.app.push_screen(TopicCreation(),after_confirm)
 
 
     def action_new_entry(self):
+        tabs = self.query_one("#tabs", TabbedContent)
+        active_id = tabs.active  # "tab-1"
+        for tab in tabs.query(Tab):
+            if tab.id == f"--content-tab-{active_id}":
+                topic = str(tab.label)
+                break
         def after_confirm(result):
             if result:
-                nt.add_entry(self.query_one("#tabs").active,result[0],result[1])
+                nt.add_entry(topic,result[0],result[1])
+                self.load_logbook()
         self.app.push_screen(EntryCreation(),after_confirm)
 
     def load_logbook(self):
@@ -1767,18 +1848,18 @@ class LogbookMenu(Screen):
         logbook = nt.get_logbook()
         tabs = self.query_one("#tabs", TabbedContent)
         await tabs.clear_panes()
-        for topic_key in logbook:
+        for topic_key in sorted(logbook):
             children = [
                 Collapsible(
-                    LogbookDeleteBtn(topic_key, entry, classes="deleteBtn"),
+                    EntryButtons(topic_key, entry, classes="buttonsHorizontal"),
                     Static(logbook[topic_key][entry]),
                     title=entry
                 )
-                for entry in logbook[topic_key]
+                for entry in sorted(logbook[topic_key])
             ]
-            await tabs.add_pane(TabPane(topic_key, Vertical(*children, classes="topicVertical")))
+            await tabs.add_pane(TabPane(topic_key,Vertical(*children, classes="topicVertical")))
 
-    def on_screen_resume(self):
+    def on_mount(self):
         self.load_logbook()
 
     def compose(self):
@@ -1799,8 +1880,104 @@ class LogbookMenu(Screen):
         def handle_confirm(confirmed: bool):
             if confirmed:
                 nt.delete_entry(message.topic,message.entry)
+                self.load_logbook()
         self.app.push_screen(ConfirmPopup("delete this entry"),handle_confirm)
 
+# Logbook topic editing
+class LogbookTopicEdit(ModalScreen):
+    DEFAULT_CSS = """
+    LogbookTopicEdit {
+        align: center middle;
+    }
+
+    #dialog {
+        width: 50;
+        height: 15;
+        border: round $primary;
+        background: $surface;
+        padding: 1 2;
+        align: center middle;
+    }
+    
+    #confirmButtons {
+        align: center middle;
+    }
+    
+    #confirm {
+        margin-right: 2;
+    }
+    """
+
+    def __init__(self, topic: str):
+        super().__init__()
+        self.topic = topic
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            yield Static("Edit logbook topic\n",classes="center")
+            yield Input(placeholder="Topic name",value=self.topic,id="topicTitle")
+            with Horizontal(id="confirmButtons"):
+                yield Button("Apply",id="confirm")
+                yield Button("Cancel",id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "confirm":
+            self.dismiss(self.query_one("#topicTitle").value)
+        else:
+            self.dismiss(None)
+
+# Logbook entry editing
+class LogbookEntryEdit(ModalScreen):
+    DEFAULT_CSS = """
+    LogbookEntryEdit {
+        align: center middle;
+    }
+
+    #dialog {
+        width: 50;
+        height: 25;
+        border: round $primary;
+        background: $surface;
+        padding: 1 2;
+        align: center middle;
+    }
+    
+    #confirmButtons {
+        align: center middle;
+    }
+    
+    #confirm {
+        margin-right: 2;
+    }
+    
+    #entryText {
+        height: 10;
+        min-height: 10;
+        max-height: 10;
+    }
+    """
+
+    def __init__(self, topic_key, entry):
+        super().__init__()
+        self.topic_key = topic_key
+        self.entry = entry
+
+    def compose(self) -> ComposeResult:
+        with Vertical(id="dialog"):
+            yield Static("Edit entry\n",classes="center")
+            yield Input(placeholder="Entry title",value=self.entry,id="entryTitle")
+            yield TextArea(placeholder="Entry text",text=nt.get_entry(self.topic_key,self.entry),id="entryText")
+            with Horizontal(id="confirmButtons"):
+                yield Button("Apply",id="confirm")
+                yield Button("Cancel",id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed) -> None:
+        if event.button.id == "confirm":
+            self.dismiss((self.query_one("#entryTitle").value,self.query_one("#entryText").text))
+        else:
+            self.dismiss(None)
+
+# Settings menu
 class SettingsMenu(Screen):
     BINDINGS = [  # key, action, description
         ("escape", "app.pop_screen", "Go back"),
@@ -1849,7 +2026,6 @@ class Vyrmie(App):
         self.push_screen(InputErrorScreen(errors))
 
     def index_calendar(self):
-        beep()
         self.calendarIndex = nt.build_calendar_index()
 
     def index_tasksCalendar(self):

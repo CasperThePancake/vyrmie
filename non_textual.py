@@ -540,3 +540,30 @@ def delete_topic(topic: str):
 
     with open("userData.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
+
+def get_entry(topic: str, entry: str):
+    with open("userData.json", "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    return data["logbook"][topic][entry]
+
+def edit_entry(topic: str, old_entry: str, new_entry: str, new_content: str):
+    with open("userData.json", "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    del data["logbook"][topic][old_entry]
+
+    data["logbook"][topic][new_entry] = new_content
+
+    with open("userData.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+def edit_topic(old_topic: str, new_topic: str):
+    with open("userData.json", "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    data["logbook"][new_topic] = data["logbook"][old_topic]
+    del data["logbook"][old_topic]
+
+    with open("userData.json", "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
