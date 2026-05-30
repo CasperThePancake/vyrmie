@@ -93,3 +93,4 @@ If you're a student, keeping track of short lesson notes per subject is as easy 
 ## Roadmap
 
 - One-button way to save your entire logbook as a printable document for easy reference
+- Editing logbook entries
