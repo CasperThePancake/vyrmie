@@ -3,6 +3,7 @@
 # ================================================
 import os
 import json
+import webbrowser
 from collections import defaultdict
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -567,3 +568,41 @@ def edit_topic(old_topic: str, new_topic: str):
 
     with open("userData.json", "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
+
+def export_logbook():
+    with open("userData.json", "r", encoding="utf-8") as file:
+        data = json.load(file)
+
+    username = data["userName"]
+    logbook = data["logbook"]
+
+    lines = []
+    lines.append(f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Logbook — {username}</title>
+<style>
+    body {{ font-family: sans-serif; max-width: 800px; margin: 40px auto; color: #222; }}
+    h1 {{ border-bottom: 2px solid #333; padding-bottom: 8px; }}
+    h2 {{ margin-top: 40px; color: #444; border-bottom: 1px solid #ccc; }}
+    h3 {{ margin-top: 20px; color: #666; }}
+    p {{ line-height: 1.6; }}
+</style>
+</head>
+<body>
+<h1>Logbook — {username}</h1>
+""")
+
+    for topic, entries in logbook.items():
+        lines.append(f"<h2>{topic}</h2>")
+        for entry_title, entry_text in entries.items():
+            lines.append(f"<h3>{entry_title}</h3>")
+            lines.append(f"<p>{entry_text}</p>")
+
+    lines.append("</body></html>")
+
+    with open("logbook_export.html", "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+    webbrowser.open(f"file://{os.path.abspath('logbook_export.html')}")

@@ -1792,7 +1792,11 @@ class LogbookMenu(Screen):
         ("r", "edit_topic", "Edit selected topic"),
         ("del", "del_topic", "Delete selected topic"),
         ("enter", "new_entry", "New entry"),
+        ("p","export_logbook","Export as HTML"),
     ]
+
+    def action_export_logbook(self):
+        nt.export_logbook()
 
     def action_edit_topic(self):
         tabs = self.query_one("#tabs", TabbedContent)
