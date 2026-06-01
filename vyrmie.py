@@ -1359,11 +1359,11 @@ class EventEdit(Screen):
                         yield Static("\nEnd date\n", classes="center", id="toDateTitle")
                     with Horizontal(classes="dateInputEvent", id="toDate"):
                         yield Input(placeholder="Day", type="integer", restrict=r"^(?:[1-9]|[12][0-9]|3[01])?$",
-                                    classes="dateChooser", value=str(date.fromisoformat(self.event["start_date"]).day),id="eventToDay")
+                                    classes="dateChooser", value=str(date.fromisoformat(self.event["end_date"]).day),id="eventToDay")
                         yield Select(options=MONTH_SELECT, classes="dateChooser", allow_blank=False,
-                                     value=date.fromisoformat(self.event["start_date"]).month,id="eventToMonth")
+                                     value=date.fromisoformat(self.event["end_date"]).month,id="eventToMonth")
                         yield Input(placeholder="Year", type="integer", classes="dateChooser",
-                                    value=str(date.fromisoformat(self.event["start_date"]).year),id="eventToYear")
+                                    value=str(date.fromisoformat(self.event["end_date"]).year),id="eventToYear")
                     with Horizontal(id="toFullDay"):
                         yield Switch(value=to_full, id="toFullDaySwitch")
                         yield Static("\nFull day\n", classes="center")
