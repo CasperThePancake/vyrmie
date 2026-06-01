@@ -247,7 +247,7 @@ class DayColumn(Widget):
         if event.widget.id == "dayEvents":
             def after_created(void):
                 self.app.index_calendar()
-            self.app.push_screen(EventCreation(),after_created)
+            self.app.push_screen(EventCreation(self.day),after_created)
         elif event.widget.id == "dayTasks":
             def on_create_task(void):
                 self.app.index_tasksCalendar()
