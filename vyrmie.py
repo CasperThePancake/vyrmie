@@ -649,6 +649,18 @@ class TasksToday(Static):
 
 # Activities for today
 class ActivitiesToday(Static):
+    def load_birthdays(self):
+        closestBirthdays = self.app.calendarIndex["birthdays"]
+        self.query_one("#birthdaysList").remove_children()
+        if len(closestBirthdays) > 0:
+            self.query_one("#birthdayCenter").styles.visibility = "visible"
+            for birthday in closestBirthdays:
+                birthdayDate = date.fromisoformat(birthday["date"])
+                birthdayName = birthday["event"]["name"].split("Birthday:", 1)[1].strip()
+                self.query_one("#birthdaysList").mount(Static(f"{birthdayName} ({MONTHS[birthdayDate.month-1]} {birthdayDate.day})", classes="menuEventEntry"))
+        else:
+            self.query_one("#birthdayCenter").styles.visibility = "hidden"
+
     def load_activities(self):
         myEvents = self.app.calendarIndex[f"{date.today().year}-{date.today().month:02d}-{date.today().day:02d}"]
         self.query_one("#activitiesList").remove_children()
@@ -683,6 +695,9 @@ class ActivitiesToday(Static):
             with Center():
                 yield Static("Today's activities", id="header")
             yield Vertical(id="activitiesList")
+            with Center(id="birthdayCenter"):
+                yield Static("Upcoming birthdays", id="header")
+            yield Vertical(id="birthdaysList")
 
     def on_click(self,event):
         event.stop()
@@ -702,6 +717,7 @@ class Menu(Screen):
     def on_screen_resume(self):
         if self.app.userData:
             self.query_one("#activitiesToday").load_activities()
+            self.query_one("#activitiesToday").load_birthdays()
             self.query_one("#tasksToday").load_tasks()
 
     def compose(self):
@@ -1545,7 +1561,7 @@ class EventCreation(Screen):
             # Repeating
             with Horizontal(id="eventRepeatsMain"):
                 yield Static("Repeats:",id="eventRepeatsTitle")
-                yield Select([("No repeat",None),("Daily","daily"),("Weekly","weekly"),("Monthly","monthly"),("Yearly","year")],value=None,allow_blank=False,id="eventRepeatsSelect")
+                yield Select([("No repeat",None),("Daily","daily"),("Weekly","weekly"),("Monthly","monthly"),("Yearly","yearly")],value=None,allow_blank=False,id="eventRepeatsSelect")
         with Center():
             yield Button("Create",id="createTask")
 
@@ -1625,7 +1641,7 @@ class CalendarMenu(Screen):
 
     def compose(self):
         yield Footer()
-        yield Header()
+        yield Header(show_clock=True)
         yield Static("Calendar",classes="center top-header")
         yield Rule(line_style="double")
         yield WeekView()

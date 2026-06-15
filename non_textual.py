@@ -312,13 +312,16 @@ def event_errors(event):
         return errorList
     return None
 
-def build_calendar_index() -> dict:
+def build_calendar_index(closest_birthdays_count: int = 10) -> dict:
     with open("userData.json", "r", encoding="utf-8") as file:
         data = json.load(file)
 
     index = defaultdict(list)
     today = date.today()
     repeat_horizon = today.replace(year=today.year + 2)
+
+    # (occurrence_date, event) pairs for every event with "Birthday:" in its name
+    birthday_candidates = []
 
     for date_key in data["events"]:
         for event in data["events"][date_key]:
@@ -327,8 +330,12 @@ def build_calendar_index() -> dict:
             repeat = event.get("repeat")
             repeat_end = date.fromisoformat(event["repeat_end"]) if event.get("repeat_end") else None
             exceptions = set(event.get("repeat_exceptions", []))
+            is_birthday = "Birthday:" in event.get("name", "")
 
             if not repeat:
+                if is_birthday:
+                    birthday_candidates.append((start, event))
+
                 d = start
                 while d <= end:
                     index[d.isoformat()].append(event)
@@ -343,6 +350,10 @@ def build_calendar_index() -> dict:
                     if d.isoformat() not in exceptions:
                         occurrence_start = d
                         occurrence_end = end + (d - start)
+
+                        if is_birthday:
+                            birthday_candidates.append((occurrence_start, event))
+
                         od = occurrence_start
                         while od <= occurrence_end:
                             index[od.isoformat()].append(event)
@@ -359,6 +370,23 @@ def build_calendar_index() -> dict:
                         d = d.replace(year=d.year + 1)
                     else:
                         break
+
+    # Sort by absolute distance from today, then keep the closest N
+    birthday_candidates = [c for c in birthday_candidates if c[0] >= today]
+    birthday_candidates.sort(key=lambda item: abs((item[0] - today).days))
+
+    seen_events = set()
+    deduped_candidates = []
+    for occ_date, event in birthday_candidates:
+        key = id(event)
+        if key not in seen_events:
+            seen_events.add(key)
+            deduped_candidates.append((occ_date, event))
+
+    index["birthdays"] = [
+        {"date": occ_date.isoformat(), "event": event}
+        for occ_date, event in deduped_candidates[:closest_birthdays_count]
+    ]
 
     return index
 
