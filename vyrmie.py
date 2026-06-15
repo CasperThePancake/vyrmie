@@ -1404,7 +1404,7 @@ class EventEdit(Screen):
             # Repeating
             with Horizontal(id="eventRepeatsMain"):
                 yield Static("Repeats:",id="eventRepeatsTitle")
-                yield Select([("No repeat",None),("Daily","daily"),("Weekly","weekly"),("Monthly","monthly"),("Yearly","year")],value=self.event["repeat"],allow_blank=False,id="eventRepeatsSelect")
+                yield Select([("No repeat",None),("Daily","daily"),("Weekly","weekly"),("Monthly","monthly"),("Yearly","yearly")],value=self.event["repeat"],allow_blank=False,id="eventRepeatsSelect")
         yield Static("Note: changing any date or repeat options will reset all deleted repeats of this event!",classes="center")
         with Center():
             yield Button("Apply",id="createTask")
